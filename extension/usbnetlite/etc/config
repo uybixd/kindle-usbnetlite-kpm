@@ -17,3 +17,6 @@ PORT="22"
 USE_WIFI="true"
 
 TWEAK_MAC_ADDRESS="false"
+
+# Uncomment to enable faster transfers but higher memory usage
+# WINDOW_SIZE="6291456"
