@@ -108,6 +108,10 @@ elif [ "${PASSWORD_OVERRIDE_ENABLED}" == "true" ] ; then
     SSH_DAEMON_OPTS="${SSH_DAEMON_OPTS} -Y ${PASSWORD}"
 fi
 
+if [ -n "${WINDOW_SIZE}" ] ; then
+    SSH_DAEMON_OPTS="${SSH_DAEMON_OPTS} -W ${WINDOW_SIZE}"
+fi
+
 # USB NET => USB MS
 usbnet_to_usbms() {
     kh_msg "switching from usbnet to usbms" I
