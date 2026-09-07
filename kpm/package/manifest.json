@@ -1,0 +1,16 @@
+{
+  "manifest_version": 2,
+  "id": "usbnetlite",
+  "name": "USBNetLite",
+  "author": "Marek",
+  "description": "Manual USB networking and Dropbear SSH for armhf Kindles.",
+  "version": [
+    1,
+    0,
+    0
+  ],
+  "dependencies": [],
+  "supported_platforms": [
+    "kindlehf"
+  ]
+}

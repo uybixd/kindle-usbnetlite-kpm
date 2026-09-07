@@ -281,7 +281,7 @@ usbms_to_usbnet() {
 
     # Start ssh daemon
 
-    [ -x /usr/bin/dropbear ] || chmod +x /usr/bin/dropbear
+    [ -x "${SSH_DAEMON}" ] || chmod +x "${SSH_DAEMON}"
     # If we're in SSHD only mode, we'll get here *every* usbNetwork call, since we never load g_ether.
     # So make sure we toggle SSHD start/stop instead
     if [ -f ${SSH_PID} ] ; then
@@ -337,7 +337,7 @@ usbms_to_usbnet() {
 # (NOTE: Might not be really that useful anymore on FW 5.x, since the ota updater trigger a full restart when it finishes...)
 # That's because volumd, which is started before us, *needs* g_file_storage loaded, or it won't properly setup the USBMS export.
 # The cleanest way to make everyone happy is to just go back to USB MS before entering the update runlevel.
-if [ "$1" == "usbms" ] ; then
+if [ "$1" == "usbms" -o "$1" == "stop" ] ; then
     # We only want to switch back to USB MS
     if lsmod | grep -q g_ether ; then
         # Send a broadcast to notify users who skipped reading the manual, because that's a BadThing(TM)...
@@ -349,7 +349,17 @@ if [ "$1" == "usbms" ] ; then
     fi
 
     # Go away, we wouldn't want to re-toggle after that ;).
-    return 0
+    exit 0
+fi
+
+# Explicit start is useful to KPM callers that do not want toggle semantics.
+if [ "$1" == "usbnet" -o "$1" == "start" ] ; then
+    if lsmod | grep -q g_ether ; then
+        kh_msg "usbnet is already started" I
+    else
+        usbms_to_usbnet
+    fi
+    exit 0
 fi
 
 # Check if we're already in USB network mode, then return to USB Mass storage

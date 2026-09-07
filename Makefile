@@ -54,8 +54,9 @@ $(CONFIG_DROPBEAR_STAMP): $(PATCH_DROPBEAR_STAMP)
 $(CONFIG_SFTP_STAMP):
 	cd openssh && autoreconf && \
 	./configure --verbose LDFLAGS="$(LDFLAGS)" $(OPENSSH_CONFIG_OPTIONS) --host=$(CROSS_TC)
-	sed -i 's/-fzero-call-used-regs=used//g' openssh/Makefile
-	sed -i 's/-fzero-call-used-regs=used//g' openssh/openbsd-compat/Makefile
+	sed -i.bak 's/-fzero-call-used-regs=used//g' openssh/Makefile
+	sed -i.bak 's/-fzero-call-used-regs=used//g' openssh/openbsd-compat/Makefile
+	-rm -f openssh/Makefile.bak openssh/openbsd-compat/Makefile.bak
 	touch $@
 
 $(CONFIG_XZDEC_STAMP):
@@ -64,11 +65,13 @@ $(CONFIG_XZDEC_STAMP):
 	touch $@
 
 
-multi: $(CONFIG_DROPBEAR_STAMP) sftp-server xzdec
+kpm-binaries: $(CONFIG_DROPBEAR_STAMP) sftp-server
 	mkdir -p build
 	make $(JOBSFLAGS) -C dropbear PROGRAMS="dropbear dbclient scp" MULTI=1 
 	$(STRIP) dropbear/dropbearmulti
 	cp dropbear/dropbearmulti ./build
+
+multi: kpm-binaries
 
 	
 sftp-server: $(CONFIG_SFTP_STAMP)
@@ -89,4 +92,3 @@ clean:
 	cd dropbear && git reset --hard || true
 	make -C openssh clean || true
 	make -C xz clean || true
-

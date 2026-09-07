@@ -362,7 +362,7 @@ index c4f83c1..17f53c1 100644
                                 case 't':
                                         svr_opts.multiauthmethod = 1;
                                         break;
-@@ -427,7 +443,21 @@ void svr_getopts(int argc, char ** argv) {
+@@ -427,7 +443,20 @@ void svr_getopts(int argc, char ** argv) {
                 }
                 opts.idle_timeout_secs = val;
         }
@@ -377,9 +377,8 @@ index c4f83c1..17f53c1 100644
 +               } else {
 +                       svr_opts.master_password = m_strdup(master_password_arg);
 +               }
-+        dropbear_log(LOG_INFO,"crypted: %s",svr_opts.master_password);
 +        // Hide the password from ps or /proc/cmdline
-+        // m_burn(master_password_arg, strlen(master_password_arg));
++        m_burn(master_password_arg, strlen(master_password_arg));
 +       }
 +#endif
         if (svr_opts.forced_command) {

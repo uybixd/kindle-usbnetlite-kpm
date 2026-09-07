@@ -2,7 +2,7 @@
 <extension>
 	<information>
 		<name>USBNetLite</name>
-		<version>1.0</version>
+		<version>1.0.0-kpm</version>
 		<author>Marek</author>
 		<id>USBNetLite-Menu</id>
 	</information>

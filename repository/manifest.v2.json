@@ -1,0 +1,7 @@
+{
+  "manifest_version": 2,
+  "id": "usbnetlite",
+  "name": "USBNetLite Repository",
+  "description": "KPM releases of USBNetLite.",
+  "packages": {}
+}
