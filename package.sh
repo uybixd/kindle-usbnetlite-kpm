@@ -1,42 +1,70 @@
-#!/bin/bash
-HACKNAME="usbnetlite"
-VERSION="1.0.M"
-COMMIT=$(git rev-parse --short HEAD)
-KT_PM_FLAGS=( "-xPackageName=${HACKNAME}" "-xPackageVersion=${VERSION}-r${COMMIT}" "-xPackageAuthor=Marek" "-xPackageMaintainer=Marek" "-X" )
-### enable toolchain
-. ~/koxtoolchain/refs/x-compile.sh khf env
+#!/usr/bin/env bash
 
-### Build dropbear, sftp-server and xzdec
-make -j$(grep -c '^processor' /proc/cpuinfo) multi
+set -euo pipefail
 
-### Create out folder
-mkdir -p out
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PACKAGE_SOURCE="${PROJECT_ROOT}/kpm/package"
+STAGE_ROOT="${PROJECT_ROOT}/build/kpm-package"
+STAGE_DIR="${STAGE_ROOT}/usbnetlite"
+OUTPUT_DIR="${PROJECT_ROOT}/out"
 
-mkdir -p build/mntus_package
-cp -r extension/extensions build/mntus_package
-cp -r extension/${HACKNAME} build/mntus_package
-echo "USBNETLite ${VERSION}-r${COMMIT}" > build/mntus_package/${HACKNAME}/etc/VERSION
+KPM_HELPER="${KPM_HELPER:-${PROJECT_ROOT}/../KPM/kpm-helper.py}"
+KOX_TOOLCHAIN_ROOT="${KOX_TOOLCHAIN_ROOT:-${PROJECT_ROOT}/../koxtoolchain}"
 
-mv build/dropbearmulti build/mntus_package/${HACKNAME}/bin
-mv build/sftp-server build/mntus_package/${HACKNAME}/bin
-cp build/xzdec build/mntus_package/${HACKNAME}/bin # i guess you might want it for something :)
+if [ ! -f "${KPM_HELPER}" ]; then
+    echo "Missing kpm-helper.py: ${KPM_HELPER}" >&2
+    echo "Set KPM_HELPER to the helper from https://github.com/KindleModding/KPM" >&2
+    exit 1
+fi
+if [ ! -f "${KOX_TOOLCHAIN_ROOT}/refs/x-compile.sh" ]; then
+    echo "Missing koxtoolchain: ${KOX_TOOLCHAIN_ROOT}" >&2
+    echo "Set KOX_TOOLCHAIN_ROOT to a configured KindleModding/koxtoolchain checkout." >&2
+    exit 1
+fi
 
-mv build/xzdec out
-cp extension/install.sh out
-cp extension/${HACKNAME}.conf out
-cp extension/${HACKNAME}-preinit.conf out
+if command -v getconf >/dev/null 2>&1; then
+    BUILD_JOBS="$(getconf _NPROCESSORS_ONLN 2>/dev/null || true)"
+fi
+if [ -z "${BUILD_JOBS:-}" ] && command -v sysctl >/dev/null 2>&1; then
+    BUILD_JOBS="$(sysctl -n hw.ncpu 2>/dev/null || true)"
+fi
+BUILD_JOBS="${BUILD_JOBS:-1}"
 
-wget https://svn.ak-team.com/svn/Configs/trunk/Kindle/Touch_Hacks/Common/lib/libotautils5 -O out/libotautils5
+git -C "${PROJECT_ROOT}" submodule update --init dropbear openssh
 
-tar --hard-dereference --owner root --group root --exclude-vcs -cvf ./out/${HACKNAME}.tar ./build/mntus_package/${HACKNAME} ./build/mntus_package/extensions
-xz ./out/${HACKNAME}.tar
+# The existing binaries and patches target Kindle armhf devices.
+# shellcheck disable=SC1091
+. "${KOX_TOOLCHAIN_ROOT}/refs/x-compile.sh" khf env
+make -C "${PROJECT_ROOT}" -j"${BUILD_JOBS}" kpm-binaries
 
-cd out
-chmod +x install.sh
-kindletool create ota2 "${KT_PM_FLAGS[@]}" -d paperwhite4 -d basic3 -d oasis3 -d paperwhite5 -d basic4 -d scribe libotautils5 install.sh ${HACKNAME}.tar.xz xzdec ${HACKNAME}-preinit.conf ${HACKNAME}.conf Update_${HACKNAME}_${VERSION}_install_khf.bin
-cd ..
+case "${STAGE_ROOT}" in
+    "${PROJECT_ROOT}/build/"*) ;;
+    *)
+        echo "Unsafe staging path: ${STAGE_ROOT}" >&2
+        exit 1
+        ;;
+esac
 
-mv out/Update_${HACKNAME}_${VERSION}_install_khf.bin .
-rm -rf out 
-mkdir -p out 
-mv Update_${HACKNAME}_${VERSION}_install_khf.bin out
+rm -rf "${STAGE_ROOT}"
+mkdir -p "${STAGE_DIR}/payload" "${OUTPUT_DIR}"
+cp -R "${PACKAGE_SOURCE}/." "${STAGE_DIR}/"
+cp -R "${PROJECT_ROOT}/extension/usbnetlite" "${STAGE_DIR}/payload/usbnetlite"
+cp -R "${PROJECT_ROOT}/extension/extensions" "${STAGE_DIR}/payload/extensions"
+cp -f "${PROJECT_ROOT}/build/dropbearmulti" "${STAGE_DIR}/payload/usbnetlite/bin/dropbearmulti"
+cp -f "${PROJECT_ROOT}/build/sftp-server" "${STAGE_DIR}/payload/usbnetlite/bin/sftp-server"
+
+PACKAGE_VERSION="$(python3 -c 'import json, sys; print(".".join(map(str, json.load(open(sys.argv[1]))["version"])))' "${STAGE_DIR}/manifest.json")"
+printf 'USBNetLite %s (KPM)\n' "${PACKAGE_VERSION}" > "${STAGE_DIR}/payload/usbnetlite/etc/VERSION"
+
+chmod 0755 \
+    "${STAGE_DIR}/install.sh" \
+    "${STAGE_DIR}/launch.sh" \
+    "${STAGE_DIR}/uninstall.sh" \
+    "${STAGE_DIR}/payload/extensions/usbnetlite/bin/usbnetlite.sh" \
+    "${STAGE_DIR}/payload/usbnetlite/bin/dropbearmulti" \
+    "${STAGE_DIR}/payload/usbnetlite/bin/libkh5" \
+    "${STAGE_DIR}/payload/usbnetlite/bin/sftp-server" \
+    "${STAGE_DIR}/payload/usbnetlite/bin/usbnetwork" \
+    "${STAGE_DIR}/payload/usbnetlite/bin/usbnetlite.sh"
+
+python3 "${KPM_HELPER}" package pack "${STAGE_DIR}" "${OUTPUT_DIR}"

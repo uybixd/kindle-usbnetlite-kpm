@@ -15,6 +15,26 @@
 			"internal": "status Print the current version of the hack"
 		},
 		{
+			"name": "Start USBNetwork",
+			"action": "./bin/usbnetlite.sh",
+			"params": "start_usbnet",
+			"exitmenu": false,
+			"checked": true,
+			"refresh": false,
+			"status": false,
+			"internal": "status Start USBNetwork and SSH"
+		},
+		{
+			"name": "Stop USBNetwork",
+			"action": "./bin/usbnetlite.sh",
+			"params": "stop_usbnet",
+			"exitmenu": false,
+			"checked": true,
+			"refresh": false,
+			"status": false,
+			"internal": "status Stop USBNetwork and SSH"
+		},
+		{
 			"name": "* Toggle USBNetwork *",
 			"action": "./bin/usbnetlite.sh",
 			"params": "toggle_usbnet",
@@ -34,26 +54,6 @@
 			"internal": "status Print current USBNetwork mode"
 		},
 		{
-			"name": "Enable SSH at boot",
-			"if": "\"/mnt/us/usbnetlite/auto\" -f!",
-			"action": "./bin/usbnetlite.sh",
-			"params": "enable_auto",
-			"exitmenu": false,
-			"refresh": true,
-			"status": false,
-			"internal": "status Boot the Kindle in USBNet mode"
-		},
-		{
-			"name": "Disable SSH at boot (Default)",
-			"if": "\"/mnt/us/usbnetlite/auto\" -f",
-			"action": "./bin/usbnetlite.sh",
-			"params": "disable_auto",
-			"exitmenu": false,
-			"refresh": true,
-			"status": false,
-			"internal": "status Boot the Kindle in USBMS mode"
-		},
-		{
 			"name": "Allow SSH over WiFi",
 			"if": "\"Kindle2\" -m! \"KindleDX\" -m! \"KindleDXG\" -m! \"/mnt/us/usbnetlite/etc/config\" \"^USE_WIFI=.false.$\" -g \"/mnt/us/usbnetlite/etc/config\" \"^K3_WIFI=.false.$\" -g || && && &&",
 			"action": "./bin/usbnetlite.sh",
@@ -64,7 +64,7 @@
 			"internal": "status Enable SSH over WiFi"
 		},
 		{
-			"name": "Block SSH over WiFi (Default)",
+			"name": "Block SSH over WiFi",
 			"if": "\"Kindle2\" -m! \"KindleDX\" -m! \"KindleDXG\" -m! \"/mnt/us/usbnetlite/etc/config\" \"^USE_WIFI=.true.$\" -g \"/mnt/us/usbnetlite/etc/config\" \"^K3_WIFI=.true.$\" -g || && && &&",
 			"action": "./bin/usbnetlite.sh",
 			"params": "disable_wifi",
