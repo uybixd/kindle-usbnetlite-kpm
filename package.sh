@@ -34,7 +34,7 @@ git -C "${PROJECT_ROOT}" submodule update --init dropbear openssh
 
 # The existing binaries and patches target Kindle armhf devices.
 # shellcheck disable=SC1091
-. "${KOX_TOOLCHAIN_ROOT}/refs/x-compile.sh" khf env
+. "${KOX_TOOLCHAIN_ROOT}/refs/x-compile.sh" khf env ""
 make -C "${PROJECT_ROOT}" -j"${BUILD_JOBS}" kpm-binaries
 
 case "${STAGE_ROOT}" in
